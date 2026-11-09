@@ -1,0 +1,41 @@
+# Weather dashboard configuration (Ecowitt WS90 + WH31 via rtl_433 / MQTT)
+# Copy this file to config.yaml and adapt it.
+#
+# rtl_433 publishes every field as a sub-topic, e.g.:
+#   rtl_433/<hostname>/devices/Fineoffset-WS90/<id>/temperature_C = 11.0
+# Just set the device "base" topic (without the trailing field name).
+# JSON payloads published directly on the base topic are supported too.
+
+# Optional: if set, the dashboard asks for this password
+# password: mypass
+
+dashboard:
+  title: "My Weather"
+  language: "en"             # "en" (English) or "it" (Italian)
+  timezone: "Europe/Rome"
+  wind_unit: "km/h"          # "km/h" or "m/s"
+  refresh_seconds: 10        # page refresh interval
+  stale_seconds: 600         # after this many seconds a sensor is shown as "stale"
+  history_db: "weather_history.sqlite"   # local history (used by charts and rain totals)
+  sample_seconds: 60         # interval between samples saved to the history
+  chart_hours: 24            # chart time window
+
+# WS90 integrated weather station
+ws90:
+  name: "Outdoor"
+  host: 192.168.1.10         # MQTT broker
+  port: 1883
+  # username: ""             # MQTT credentials, if needed
+  # password: ""
+  topic: rtl_433/myhost/devices/Fineoffset-WS90/12345
+
+# WH31 temperature/humidity sensors (one entry each, any display name)
+# The topic is <base>/<channel>/<id>. The id changes when batteries are replaced:
+# use "+" instead of the id to ignore it, e.g. .../AmbientWeather-WH31E/1/+
+wh31:
+  - name: "Living room"
+    host: 192.168.1.10
+    topic: rtl_433/myhost/devices/AmbientWeather-WH31E/1/+
+  - name: "Bedroom"
+    host: 192.168.1.10
+    topic: rtl_433/myhost/devices/AmbientWeather-WH31E/2/+

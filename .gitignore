@@ -1,0 +1,7 @@
+config.yaml
+*.sqlite
+*.sqlite-*
+.venv/
+__pycache__/
+.claude/
+.DS_Store
