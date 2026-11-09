@@ -249,6 +249,16 @@ def rain_since(current, since_ts):
     return max(0.0, current - first)
 
 
+def minmax_with_current(fname, current, since_ts):
+    """Min/max of a WS90 field since a timestamp, including the live value
+    (which may not have been saved to the history yet)."""
+    lo, hi = HUB.minmax_since("ws90", fname, since_ts)
+    if isinstance(current, (int, float)):
+        lo = current if lo is None else min(lo, current)
+        hi = current if hi is None else max(hi, current)
+    return lo, hi
+
+
 @st.cache_data(ttl=60, show_spinner=False)
 def load_history(hours: float, _bucket: int) -> pd.DataFrame:
     rows = HUB.history([s.key for s in SENSORS], time.time() - hours * 3600)
@@ -367,7 +377,7 @@ def render_cards(snap):
         t, rh = v.get("temperature_C"), v.get("humidity")
         avg, gust, wdir = v.get("wind_avg_m_s"), v.get("wind_max_m_s"), v.get("wind_dir_deg")
 
-        tmin, tmax = HUB.minmax_since("ws90", "temperature_C", starts["today"])
+        tmin, tmax = minmax_with_current("temperature_C", t, starts["today"])
         body = (f'<div class="ew-big">{fmt(t)}<small>°C</small></div>'
                 + row(tr("feels_like"), fmt(feels_like(t, rh, avg), 1, " °C"))
                 + row(tr("dew_point"), fmt(dew_point(t, rh), 1, " °C"))
@@ -376,7 +386,7 @@ def render_cards(snap):
         html.append(card(f"{ws_name()} · {tr('temperature')}", "🌡", COLORS["temp"], body, upd))
 
         bn, bname = beaufort(avg)
-        _, gmax = HUB.minmax_since("ws90", "wind_max_m_s", starts["today"])
+        _, gmax = minmax_with_current("wind_max_m_s", gust, starts["today"])
         body = (f'<div class="ew-flex"><div>'
                 f'<div class="ew-big">{fmt(wind(avg))}<small>{WIND_UNIT}</small></div>'
                 + row(tr("gust"), fmt(wind(gust), 1, f" {WIND_UNIT}"))
@@ -397,7 +407,7 @@ def render_cards(snap):
         # W/m² estimated from lux with the usual Ecowitt factor (126.7 lux = 1 W/m²)
         lux, uvi = v.get("light_lux"), v.get("uvi")
         uvn, uvc = uv_level(uvi)
-        _, smax = HUB.minmax_since("ws90", "light_lux", starts["today"])
+        _, smax = minmax_with_current("light_lux", lux, starts["today"])
         body = (f'<div class="ew-big">{fmt(lux / 126.7 if lux is not None else None)}'
                 f'<small>W/m²</small></div>'
                 + row(tr("brightness"), fmt(lux, 0, " lux"))
