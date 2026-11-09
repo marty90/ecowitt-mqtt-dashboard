@@ -59,14 +59,21 @@ cd ecowitt-mqtt-dashboard
 python3 -m venv .venv
 .venv/bin/pip install -r requirements.txt
 cp config.example.yaml config.yaml   # then edit config.yaml
-.venv/bin/streamlit run app.py
+.venv/bin/python run.py
 ```
 
-Open http://localhost:8501. To use a different configuration file:
+Open http://localhost:8501. Options:
 
 ```bash
-.venv/bin/streamlit run app.py -- --config other.yaml
+.venv/bin/python run.py --config other.yaml --port 8080
 ```
+
+Any other option is passed on to Streamlit (e.g. `--server.address 0.0.0.0`).
+
+`run.py` starts reading MQTT and saving data as soon as it is launched, then serves the
+dashboard in the same process, so data are collected even when nobody has the page open.
+You can also run `streamlit run app.py` (handy while developing, as it reloads on code
+changes), but then data collection only starts when the first browser opens the page.
 
 ## Configuration (`config.yaml`)
 
@@ -103,8 +110,8 @@ a detached `screen` session at every reboot:
 # rtl_433: receive sensors and publish to MQTT
 @reboot sleep 20 && /usr/bin/screen -dmS rtl433 bash -c '/home/pi/rtl_433/src/rtl_433 -f 868M -C si -M time:unix:usec:utc -F mqtt'
 
-# Weather dashboard on port 8501
-@reboot sleep 30 && /usr/bin/screen -dmS dashboard bash -c 'cd /home/pi/ecowitt-mqtt-dashboard && .venv/bin/streamlit run app.py --server.port 8501'
+# Weather dashboard on port 8501 (also starts MQTT data collection)
+@reboot sleep 30 && /usr/bin/screen -dmS dashboard bash -c 'cd /home/pi/ecowitt-mqtt-dashboard && .venv/bin/python run.py --port 8501'
 ```
 
 Attach to a session with `screen -r rtl433` or `screen -r dashboard` (detach with

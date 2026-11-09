@@ -1,6 +1,9 @@
 """Streamlit weather dashboard for Ecowitt WS90 + WH31 sensors (rtl_433 via MQTT).
 
-Run:
+Run (recommended, collects data even when nobody has the page open):
+    python run.py [--config config.yaml] [--port 8501]
+
+Run with plain Streamlit (data collection starts at the first page view):
     streamlit run app.py                         # uses ./config.yaml
     streamlit run app.py -- --config other.yaml
     WEATHER_CONFIG=other.yaml streamlit run app.py
@@ -20,9 +23,7 @@ from zoneinfo import ZoneInfo
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
-import yaml
-
-from mqtt_hub import MqttHub, SensorConf
+import settings
 
 
 # ============================================================ configuration
@@ -35,37 +36,13 @@ def config_path() -> str:
 
 @st.cache_resource
 def load_config(path: str) -> dict:
-    with open(path, encoding="utf-8") as f:
-        cfg = yaml.safe_load(f) or {}
-    cfg["dashboard"] = cfg.get("dashboard") or {}
-    cfg["wh31"] = cfg.get("wh31") or []
-    return cfg
-
-
-def build_sensors(cfg: dict) -> list[SensorConf]:
-    sensors = []
-    if cfg.get("ws90"):
-        w = cfg["ws90"]
-        sensors.append(SensorConf(
-            key="ws90", name=w.get("name", "Outdoor"), kind="ws90",
-            host=w["host"], port=int(w.get("port", 1883)), topic=w["topic"].rstrip("/"),
-            username=w.get("username"), password=w.get("password"),
-        ))
-    for i, s in enumerate(cfg["wh31"]):
-        sensors.append(SensorConf(
-            key=f"wh31_{i}", name=s.get("name", f"Sensor {i + 1}"), kind="wh31",
-            host=s["host"], port=int(s.get("port", 1883)), topic=s["topic"].rstrip("/"),
-            username=s.get("username"), password=s.get("password"),
-        ))
-    return sensors
+    return settings.load_config(path)
 
 
 @st.cache_resource
-def get_hub(path: str) -> MqttHub:
-    cfg = load_config(path)
-    d = cfg["dashboard"]
-    return MqttHub(build_sensors(cfg), d.get("history_db", "weather_history.sqlite"),
-                   int(d.get("sample_seconds", 60)))
+def get_hub(path: str):
+    # Reuses the hub already started by run.py, if any
+    return settings.start_hub(path)
 
 
 CFG_PATH = config_path()
@@ -176,7 +153,7 @@ def require_password():
 require_password()
 
 HUB = get_hub(CFG_PATH)
-SENSORS = build_sensors(CFG)
+SENSORS = settings.build_sensors(CFG)
 
 
 # ============================================================ weather math
