@@ -6,6 +6,8 @@ sensors. Data are received over the air by an RTL-SDR dongle, decoded by
 [rtl_433](https://github.com/merbanan/rtl_433), published to an MQTT broker and read by the
 dashboard with [paho-mqtt](https://pypi.org/project/paho-mqtt/).
 
+![Dashboard screenshot](docs/screenshot.webp)
+
 Features:
 
 - Outdoor temperature, feels-like, dew point, humidity, today's min/max
