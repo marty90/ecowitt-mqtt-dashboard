@@ -109,3 +109,7 @@ a detached `screen` session at every reboot:
 
 Attach to a session with `screen -r rtl433` or `screen -r dashboard` (detach with
 `Ctrl-A D`); list sessions with `screen -ls`.
+
+## License
+
+[MIT](LICENSE)
